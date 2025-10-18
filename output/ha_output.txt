@@ -1,0 +1,190 @@
+--- Starting: Loading and Preparing Data - Home Assistant dataset ---
+Successfully loaded 'ha_converted.csv'
+Data preparation complete.
+----------------------------------------
+
+--- Starting: Splitting Data into Training and Test Sets ---
+Training data size: 19384 points
+Test data size:     19432 points
+----------------------------------------
+
+--- Starting: Model Training ---
+Warning: path already exists! This predictor may overwrite an existing predictor! path="autogluon_power_forecast_ha"
+Beginning AutoGluon training...
+AutoGluon will save models to '/Users/sethyx/Code/szakdog/autogluon_power_forecast_ha'
+=================== System Info ===================
+AutoGluon Version:  1.4.0
+Python Version:     3.9.6
+Operating System:   Darwin
+Platform Machine:   arm64
+Platform Version:   Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:40 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6041
+CPU Count:          12
+GPU Count:          1
+Memory Avail:       8.48 GB / 24.00 GB (35.3%)
+Disk Space Avail:   155.22 GB / 460.43 GB (33.7%)
+===================================================
+
+Fitting with arguments:
+{'enable_ensemble': False,
+ 'eval_metric': WQL,
+ 'hyperparameters': {'AutoARIMA': {},
+                     'AutoETS': {},
+                     'Chronos': [{'ag_args': {'name_suffix': 'ZeroShot'},
+                                  'model_path': 'bolt_small'},
+                                 {'ag_args': {'name_suffix': 'FineTuned'},
+                                  'fine_tune': True,
+                                  'model_path': 'bolt_small'}],
+                     'DeepAR': {},
+                     'WaveNet': {}},
+ 'known_covariates_names': [],
+ 'num_val_windows': 1,
+ 'prediction_length': 48,
+ 'quantile_levels': [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+ 'random_seed': 123,
+ 'refit_every_n_windows': 1,
+ 'refit_full': False,
+ 'skip_model_selection': False,
+ 'target': 'hourly_consumption',
+ 'verbosity': 2}
+
+Inferred time series frequency: 'h'
+Provided train_data has 19384 rows, 1 time series. Median time series length is 19384 (min=19384, max=19384). 
+
+Provided data contains following columns:
+	target: 'hourly_consumption'
+
+AutoGluon will gauge predictive performance using evaluation metric: 'WQL'
+	This metric's sign has been flipped to adhere to being higher_is_better. The metric score can be multiplied by -1 to get the metric value.
+===================================================
+
+Starting training. Start time is 2025-09-13 16:44:35
+Models that will be trained: ['AutoETS', 'AutoARIMA', 'ChronosZeroShot[bolt_small]', 'ChronosFineTuned[bolt_small]', 'DeepAR', 'WaveNet']
+Training timeseries model AutoETS. 
+	-0.3492       = Validation score (-WQL)
+	0.01    s     = Training runtime
+	1.44    s     = Validation (prediction) runtime
+Training timeseries model AutoARIMA. 
+	-0.4155       = Validation score (-WQL)
+	0.01    s     = Training runtime
+	2.43    s     = Validation (prediction) runtime
+Training timeseries model ChronosZeroShot[bolt_small]. 
+	-0.2796       = Validation score (-WQL)
+	1.29    s     = Training runtime
+	0.75    s     = Validation (prediction) runtime
+Training timeseries model ChronosFineTuned[bolt_small]. 
+	Fine-tuning on the CPU detected. We recommend using a GPU for faster fine-tuning of Chronos.
+	Saving fine-tuned model to /Users/sethyx/Code/szakdog/autogluon_power_forecast_ha/models/ChronosFineTuned[bolt_small]/W0/fine-tuned-ckpt
+	-0.2820       = Validation score (-WQL)
+	977.77  s     = Training runtime
+	0.02    s     = Validation (prediction) runtime
+Training timeseries model DeepAR. 
+	-0.3960       = Validation score (-WQL)
+	76.39   s     = Training runtime
+	0.11    s     = Validation (prediction) runtime
+Training timeseries model WaveNet. 
+	-0.3466       = Validation score (-WQL)
+	262.84  s     = Training runtime
+	1.56    s     = Validation (prediction) runtime
+Training complete. Models trained: ['AutoETS', 'AutoARIMA', 'ChronosZeroShot[bolt_small]', 'ChronosFineTuned[bolt_small]', 'DeepAR', 'WaveNet']
+Total runtime: 1324.65 s
+Best model: ChronosZeroShot[bolt_small]
+Best model score: -0.2796
+Model training complete.
+----------------------------------------
+
+--- Starting: Generating Forecasts ---
+Model not specified in predict, will default to the model with the best validation score: ChronosZeroShot[bolt_small]
+Forecasts generated successfully.
+Forecast details:
+                                         mean       0.1       0.2       0.3       0.4       0.5       0.6       0.7       0.8       0.9
+item_id         timestamp                                                                                                              
+household_power 2025-06-22 15:00:00  0.903789  0.462261  0.589544  0.697871  0.801555  0.903789  1.018857  1.165988  1.366918  1.704616
+                2025-06-22 16:00:00  0.725591  0.339438  0.433824  0.526500  0.622568  0.725591  0.842543  0.991162  1.196391  1.536988
+                2025-06-22 17:00:00  0.673852  0.298362  0.390738  0.480006  0.572746  0.673852  0.788447  0.935116  1.142534  1.489893
+                2025-06-22 18:00:00  0.814261  0.369393  0.490166  0.598266  0.704315  0.814261  0.934770  1.086212  1.300063  1.654145
+                2025-06-22 19:00:00  0.917424  0.413957  0.556396  0.679668  0.798231  0.917424  1.048347  1.208322  1.428239  1.788120
+----------------------------------------
+
+--- Starting: Model Evaluation ---
+Additional data provided, testing on additional data. Resulting leaderboard will be sorted according to test score (`score_test`).
+                          model  score_test  score_val  pred_time_test  pred_time_val  fit_time_marginal  fit_order       MAE      WAPE
+0  ChronosFineTuned[bolt_small]   -0.198625  -0.282043        0.359980       0.024411         977.770949          4 -0.139431 -0.251228
+1   ChronosZeroShot[bolt_small]   -0.206687  -0.279622        0.804843       0.754452           1.286176          3 -0.140533 -0.253212
+2                        DeepAR   -0.240492  -0.396014        0.118469       0.106196          76.391106          5 -0.160403 -0.289015
+3                       WaveNet   -0.244578  -0.346614        1.609966       1.560250         262.837818          6 -0.166938 -0.300789
+4                       AutoETS   -0.285578  -0.349217        1.992403       1.437875           0.007219          1 -0.198801 -0.358200
+5                     AutoARIMA   -0.450654  -0.415483        2.748188       2.429361           0.007510          2 -0.355157 -0.639922
+
+Evaluation complete. Leaderboard displayed above.
+----------------------------------------
+
+--- Starting: Generating Forecasts for Each Model ---
+Calculating daily values and generating table for model AutoETS.
+Calculating daily values and generating table for model AutoARIMA.
+Calculating daily values and generating table for model ChronosZeroShot[bolt_small].
+Calculating daily values and generating table for model ChronosFineTuned[bolt_small].
+Calculating daily values and generating table for model DeepAR.
+Calculating daily values and generating table for model WaveNet.
+✅ Daily consumption summary for the forecast period (first and last days are likely partial days!):
+      date  daily_real_consumption  AutoETS daily_total_forecasted_consumption  AutoARIMA daily_total_forecasted_consumption  ChronosZeroShot[bolt_small] daily_total_forecasted_consumption  ChronosFineTuned[bolt_small] daily_total_forecasted_consumption  DeepAR daily_total_forecasted_consumption  WaveNet daily_total_forecasted_consumption
+2025-06-22                    8.74                                        6.76                                          8.26                                                            6.39                                                             6.27                                       6.18                                        5.73
+2025-06-23                   12.10                                       14.86                                         19.17                                                           11.04                                                            10.69                                       9.67                                       12.07
+2025-06-24                    5.80                                        8.10                                         12.42                                                            5.64                                                             5.67                                       5.14                                        6.90
+
+✅ Hourly consumption summary for the forecast period:
+ index         item_id           timestamp  hourly_real_consumption  AutoETS mean  AutoETS 0.1  AutoETS 0.9  AutoARIMA mean  AutoARIMA 0.1  AutoARIMA 0.9  ChronosZeroShot[bolt_small] mean  ChronosZeroShot[bolt_small] 0.1  ChronosZeroShot[bolt_small] 0.9  ChronosFineTuned[bolt_small] mean  ChronosFineTuned[bolt_small] 0.1  ChronosFineTuned[bolt_small] 0.9  DeepAR mean  DeepAR 0.1  DeepAR 0.9  WaveNet mean  WaveNet 0.1  WaveNet 0.9
+     0 household_power 2025-06-22 15:00:00                     1.64          0.73         0.33         1.12            1.33           0.96           1.70                              0.90                             0.46                             1.70                               0.97                              0.52                              1.72         0.95        0.54        1.40          0.70         0.42         1.19
+     1 household_power 2025-06-22 16:00:00                     1.80          0.78         0.39         1.18            0.87           0.45           1.29                              0.73                             0.34                             1.54                               0.74                              0.38                              1.50         0.82        0.40        1.24          0.73         0.34         1.31
+     2 household_power 2025-06-22 17:00:00                     1.14          0.80         0.41         1.20            0.97           0.55           1.40                              0.67                             0.30                             1.49                               0.66                              0.33                              1.42         0.71        0.30        1.18          0.70         0.33         1.17
+     3 household_power 2025-06-22 18:00:00                     1.25          0.84         0.44         1.23            0.88           0.44           1.31                              0.81                             0.37                             1.65                               0.78                              0.39                              1.55         0.73        0.30        1.15          0.70         0.32         1.24
+     4 household_power 2025-06-22 19:00:00                     0.68          0.91         0.52         1.31            0.91           0.48           1.35                              0.92                             0.41                             1.79                               0.85                              0.41                              1.64         0.72        0.32        1.14          0.66         0.32         1.15
+     5 household_power 2025-06-22 20:00:00                     0.71          0.82         0.42         1.22            0.94           0.50           1.38                              0.82                             0.36                             1.65                               0.74                              0.36                              1.49         0.65        0.21        1.08          0.68         0.36         1.15
+     6 household_power 2025-06-22 21:00:00                     0.69          0.73         0.33         1.12            0.89           0.44           1.33                              0.65                             0.30                             1.40                               0.63                              0.33                              1.29         0.63        0.25        1.10          0.60         0.35         1.08
+     7 household_power 2025-06-22 22:00:00                     0.54          0.67         0.27         1.07            0.79           0.34           1.24                              0.52                             0.29                             1.14                               0.52                              0.32                              1.07         0.53        0.24        0.93          0.53         0.30         0.89
+     8 household_power 2025-06-22 23:00:00                     0.29          0.48         0.08         0.88            0.69           0.24           1.14                              0.37                             0.24                             0.84                               0.37                              0.27                              0.79         0.43        0.21        0.74          0.43         0.27         0.76
+     9 household_power 2025-06-23 00:00:00                     0.25          0.41         0.01         0.81            0.68           0.22           1.14                              0.27                             0.21                             0.61                               0.27                              0.24                              0.57         0.35        0.19        0.56          0.34         0.25         0.42
+    10 household_power 2025-06-23 01:00:00                     0.27          0.39        -0.01         0.79            0.68           0.22           1.15                              0.24                             0.21                             0.49                               0.25                              0.23                              0.46         0.32        0.20        0.47          0.31         0.24         0.36
+    11 household_power 2025-06-23 02:00:00                     0.25          0.39        -0.01         0.79            0.69           0.22           1.15                              0.25                             0.21                             0.46                               0.25                              0.23                              0.42         0.30        0.20        0.37          0.30         0.25         0.33
+    12 household_power 2025-06-23 03:00:00                     0.25          0.38        -0.02         0.78            0.69           0.22           1.16                              0.25                             0.21                             0.44                               0.25                              0.23                              0.40         0.27        0.20        0.34          0.29         0.24         0.34
+    13 household_power 2025-06-23 04:00:00                     0.25          0.37        -0.03         0.77            0.68           0.20           1.15                              0.26                             0.21                             0.45                               0.26                              0.23                              0.41         0.27        0.21        0.35          0.29         0.24         0.34
+    14 household_power 2025-06-23 05:00:00                     0.24          0.39        -0.02         0.79            0.68           0.20           1.16                              0.29                             0.22                             0.49                               0.28                              0.23                              0.46         0.30        0.20        0.41          0.33         0.25         0.41
+    15 household_power 2025-06-23 06:00:00                     0.38          0.47         0.06         0.87            0.67           0.19           1.16                              0.35                             0.25                             0.59                               0.35                              0.25                              0.56         0.37        0.22        0.53          0.47         0.27         0.80
+    16 household_power 2025-06-23 07:00:00                     0.36          0.51         0.11         0.92            0.73           0.25           1.22                              0.41                             0.26                             0.72                               0.42                              0.28                              0.69         0.40        0.22        0.59          0.53         0.32         0.83
+    17 household_power 2025-06-23 08:00:00                     0.27          0.55         0.15         0.95            0.71           0.21           1.20                              0.42                             0.24                             0.78                               0.44                              0.27                              0.73         0.41        0.25        0.57          0.58         0.34         0.99
+    18 household_power 2025-06-23 09:00:00                     0.50          0.52         0.12         0.92            0.71           0.22           1.21                              0.43                             0.23                             0.85                               0.45                              0.27                              0.78         0.42        0.25        0.65          0.63         0.33         1.13
+    19 household_power 2025-06-23 10:00:00                     0.56          0.77         0.37         1.18            0.97           0.47           1.47                              0.52                             0.29                             1.00                               0.51                              0.31                              0.89         0.46        0.26        0.67          0.62         0.36         1.06
+    20 household_power 2025-06-23 11:00:00                     0.66          0.74         0.33         1.14            0.85           0.35           1.35                              0.51                             0.27                             1.03                               0.52                              0.30                              0.93         0.48        0.26        0.74          0.63         0.33         0.96
+    21 household_power 2025-06-23 12:00:00                     0.59          0.61         0.20         1.01            0.79           0.28           1.30                              0.49                             0.25                             1.03                               0.50                              0.29                              0.94         0.46        0.26        0.70          0.60         0.32         1.04
+    22 household_power 2025-06-23 13:00:00                     0.52          0.72         0.32         1.13            0.85           0.33           1.36                              0.53                             0.26                             1.11                               0.52                              0.29                              0.98         0.51        0.28        0.79          0.63         0.35         1.13
+    23 household_power 2025-06-23 14:00:00                     0.73          0.89         0.48         1.29            1.15           0.63           1.67                              0.58                             0.29                             1.19                               0.55                              0.30                              1.04         0.52        0.30        0.75          0.61         0.31         1.06
+    24 household_power 2025-06-23 15:00:00                     1.04          0.73         0.32         1.13            0.97           0.43           1.51                              0.58                             0.28                             1.21                               0.54                              0.28                              1.04         0.46        0.26        0.68          0.62         0.31         1.08
+    25 household_power 2025-06-23 16:00:00                     0.88          0.78         0.38         1.19            0.82           0.27           1.37                              0.57                             0.27                             1.20                               0.51                              0.27                              1.03         0.44        0.22        0.67          0.52         0.29         0.86
+    26 household_power 2025-06-23 17:00:00                     0.75          0.80         0.40         1.21            0.88           0.32           1.44                              0.60                             0.28                             1.24                               0.53                              0.28                              1.06         0.46        0.23        0.70          0.55         0.28         0.93
+    27 household_power 2025-06-23 18:00:00                     0.68          0.84         0.43         1.25            0.87           0.31           1.43                              0.71                             0.33                             1.37                               0.63                              0.32                              1.20         0.45        0.24        0.72          0.56         0.29         0.97
+    28 household_power 2025-06-23 19:00:00                     0.54          0.91         0.50         1.32            0.83           0.26           1.40                              0.75                             0.33                             1.44                               0.68                              0.33                              1.27         0.48        0.20        0.81          0.56         0.30         0.96
+    29 household_power 2025-06-23 20:00:00                     0.63          0.82         0.41         1.23            0.83           0.25           1.40                              0.67                             0.29                             1.35                               0.64                              0.31                              1.20         0.45        0.19        0.75          0.61         0.33         1.08
+    30 household_power 2025-06-23 21:00:00                     0.69          0.73         0.32         1.14            0.86           0.28           1.44                              0.58                             0.27                             1.19                               0.56                              0.30                              1.07         0.40        0.21        0.60          0.56         0.33         0.96
+    31 household_power 2025-06-23 22:00:00                     0.54          0.67         0.26         1.08            0.79           0.20           1.38                              0.47                             0.26                             0.99                               0.46                              0.28                              0.88         0.36        0.20        0.58          0.51         0.29         0.86
+    32 household_power 2025-06-23 23:00:00                     0.27          0.48         0.07         0.89            0.79           0.20           1.39                              0.33                             0.22                             0.73                               0.32                              0.24                              0.63         0.32        0.23        0.44          0.40         0.24         0.57
+    33 household_power 2025-06-24 00:00:00                     0.25          0.41        -0.00         0.82            0.79           0.19           1.39                              0.25                             0.20                             0.53                               0.24                              0.22                              0.45         0.28        0.20        0.39          0.33         0.24         0.41
+    34 household_power 2025-06-24 01:00:00                     0.25          0.39        -0.02         0.80            0.79           0.19           1.40                              0.23                             0.21                             0.45                               0.24                              0.23                              0.38         0.27        0.20        0.33          0.31         0.25         0.38
+    35 household_power 2025-06-24 02:00:00                     0.25          0.39        -0.02         0.80            0.79           0.19           1.40                              0.25                             0.21                             0.42                               0.25                              0.24                              0.35         0.26        0.19        0.32          0.30         0.24         0.35
+    36 household_power 2025-06-24 03:00:00                     0.25          0.38        -0.03         0.79            0.79           0.17           1.40                              0.25                             0.21                             0.40                               0.25                              0.23                              0.33         0.25        0.19        0.31          0.30         0.23         0.37
+    37 household_power 2025-06-24 04:00:00                     0.24          0.37        -0.04         0.78            0.79           0.17           1.41                              0.25                             0.20                             0.42                               0.25                              0.21                              0.35         0.25        0.19        0.31          0.30         0.22         0.34
+    38 household_power 2025-06-24 05:00:00                     0.31          0.39        -0.03         0.80            0.79           0.17           1.42                              0.27                             0.21                             0.46                               0.26                              0.20                              0.40         0.25        0.18        0.33          0.33         0.23         0.45
+    39 household_power 2025-06-24 06:00:00                     0.25          0.47         0.05         0.88            0.78           0.15           1.41                              0.32                             0.23                             0.56                               0.31                              0.22                              0.49         0.30        0.19        0.42          0.42         0.27         0.62
+    40 household_power 2025-06-24 07:00:00                     0.30          0.51         0.10         0.93            0.82           0.18           1.45                              0.38                             0.25                             0.69                               0.39                              0.25                              0.63         0.35        0.21        0.52          0.50         0.31         0.86
+    41 household_power 2025-06-24 08:00:00                     0.49          0.55         0.14         0.96            0.81           0.17           1.45                              0.40                             0.24                             0.78                               0.42                              0.26                              0.71         0.36        0.21        0.53          0.55         0.32         0.97
+    42 household_power 2025-06-24 09:00:00                     0.64          0.52         0.11         0.94            0.81           0.17           1.46                              0.42                             0.24                             0.85                               0.44                              0.27                              0.77         0.40        0.19        0.56          0.54         0.31         0.86
+    43 household_power 2025-06-24 10:00:00                     0.33          0.77         0.36         1.19            0.90           0.25           1.55                              0.50                             0.28                             1.00                               0.50                              0.30                              0.89         0.44        0.20        0.70          0.62         0.31         1.12
+    44 household_power 2025-06-24 11:00:00                     0.51          0.74         0.32         1.15            0.77           0.12           1.43                              0.49                             0.27                             1.04                               0.51                              0.30                              0.94         0.42        0.22        0.66          0.58         0.32         1.06
+    45 household_power 2025-06-24 12:00:00                     0.44          0.61         0.19         1.02            0.82           0.16           1.48                              0.49                             0.26                             1.07                               0.50                              0.29                              0.96         0.40        0.23        0.63          0.61         0.32         1.03
+    46 household_power 2025-06-24 13:00:00                     0.38          0.72         0.31         1.14            0.87           0.21           1.54                              0.55                             0.28                             1.18                               0.53                              0.29                              1.04         0.42        0.20        0.68          0.61         0.35         1.02
+    47 household_power 2025-06-24 14:00:00                     0.91          0.89         0.47         1.30            1.08           0.41           1.75                              0.60                             0.30                             1.29                               0.57                              0.31                              1.14         0.48        0.23        0.77          0.61         0.32         1.00
+
+Plotting complete.
+
+Daily calculation complete.
+----------------------------------------
+
+--- Forecasting Research Script Finished ---
