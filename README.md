@@ -28,22 +28,22 @@ The system works with two datasets:
 ## Project Structure
 
 ```
-├── autogluon_power_forecast_ha/    # Home Assistant model files
-├── autogluon_power_forecast_uci/   # UCI dataset model files
+├── autogluon_energy_forecast_ha/    # Home Assistant model files
+├── autogluon_energy_forecast_uci/   # UCI dataset model files
 ├── datasets/
-│   ├── ha_convert.py               # Home Assistant data converter
-│   ├── ha_converted.csv            # HA Converted dataset
-│   ├── ha_raw.csv                  # HA Raw dataset
-│   ├── uci_dataset.csv             # UCI Resampled dataset
-│   ├── uci_raw.txt.zip             # UCI Raw dataset (compressed), from https://doi.org/10.24432/C58K54
-│   └── uci_resample.py             # UCI data resampling script
+│   ├── ha_convert.py                # Home Assistant data converter
+│   ├── ha_converted.csv             # HA Converted dataset
+│   ├── ha_raw.csv                   # HA Raw dataset
+│   ├── uci_dataset.csv              # UCI Resampled dataset
+│   ├── uci_raw.txt.zip              # UCI Raw dataset (compressed), from https://doi.org/10.24432/C58K54
+│   └── uci_resample.py              # UCI data resampling script
 ├── output/
-│   ├── images/                     # Exported plot images
-│   ├── daily_calc.xlsx             # Daily calculations
-│   ├── ha_output.txt               # HA prediction results
-│   └── uci_output.txt              # UCI prediction results
-├── forecast.py                     # Main forecasting script
-└── LICENSE                         # Apache 2.0 license
+│   ├── images/                      # Exported plot images
+│   ├── daily_calc.xlsx              # Daily calculations
+│   ├── ha_output.txt                # HA prediction results
+│   └── uci_output.txt               # UCI prediction results
+├── forecast.py                      # Main forecasting script
+└── LICENSE                          # Apache 2.0 license
 ```
 
 ## Usage
