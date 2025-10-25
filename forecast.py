@@ -21,7 +21,6 @@ def parse_arguments():
     parser.add_argument('--ha', action='store_true', help='Load Home Assistant dataset from csv/ha_converted.csv')
     parser.add_argument('--uci', action='store_true', help='Load UCI dataset from csv/uci_dataset.csv')
     parser.add_argument('--plot', action='store_true', help='Enable plot generation')
-    parser.add_argument('--daily', action='store_true', help='Enable daily forecast generation')
     
     args = parser.parse_args()
     if not (args.ha or args.uci):
@@ -67,8 +66,8 @@ def split_data(full_data, args, prediction_length=48):
     Returns:
         tuple: (train_data, test_data) splits of the TimeSeriesDataFrame
     """
-    test_data_rows = 0 if args.uci else 1800
-    train_data, test_data = full_data.train_test_split(prediction_length, len(full_data) - test_data_rows)
+    shift_test_data_rows = 0 if args.uci else 1800
+    train_data, test_data = full_data.train_test_split(prediction_length, len(full_data) - shift_test_data_rows)
     print(f"Training data size: {len(train_data)} points")
     print(f"Test data size:     {len(test_data)} points")
     return train_data, test_data
@@ -122,7 +121,7 @@ def get_or_train_model(train_data, args, prediction_length):
     )
     return predictor
 
-def generate_plots(predictor, train_data, test_data, model_groups):
+def generate_hourly_plots(predictor, train_data, test_data, model_groups):
     """
     Generate forecast plots for each model group.
     
@@ -161,6 +160,82 @@ def generate_plots(predictor, train_data, test_data, model_groups):
             
             plt.tight_layout(pad=2, w_pad=4, h_pad=2)
             plt.show()
+
+def generate_daily_plots(daily_real, model_groups):
+    """
+    Generate bar plots showing daily consumption differences for all models on one chart.
+    
+    Args:
+        daily_real (DataFrame): DataFrame containing daily actual and predicted values
+        model_groups (dict): Dictionary of model groups and their models
+    """
+    # Plot styling configuration
+    rc_params = {
+        "font.size": 10,
+        "figure.figsize": [12, 6],
+        "figure.dpi": 100,
+    }
+
+    # Color scheme matching hourly plots
+    colors = {'stat': 'C3', 'ml': 'C1', 'nlp': 'C2'}
+    
+    with plt.rc_context(rc_params):
+        fig, ax = plt.subplots(figsize=(10, 8))
+        
+        # Plot bars for each model
+        x = range(len(daily_real['date']))
+        num_models = sum(len(models[:2]) for models in model_groups.values())
+        width = 0.8 / num_models  # Width of the bars
+        max_diff = max(abs(daily_real[[f'{model} daily residual' for group in model_groups 
+                                     for model in model_groups[group]]]).max())
+        
+        bar_index = 0
+        for group in model_groups:
+            for model in model_groups[group]:  # Only first two models per group
+                diff_col = f'{model} daily residual'
+                if diff_col in daily_real.columns:
+                    offset = width * (bar_index - (num_models - 1)/2)
+                    bar_alpha = 0.4 if bar_index % 2 else 0.8
+                    bars = ax.bar(
+                        [xi + offset for xi in x],
+                        daily_real[diff_col],
+                        width,
+                        label=model.replace("[bolt_small]", ""),
+                        color=colors[group],
+                        alpha=bar_alpha
+                    )
+                    
+                    # Add value labels on top of bars
+                    for bar in bars:
+                        height = bar.get_height()
+                        ax.text(
+                            bar.get_x() + bar.get_width()/2.,
+                            height+0.1 if height >= 0 else height-0.1,
+                            f'{height:.2f}',
+                            ha='center',
+                            va='bottom' if height >= 0 else 'top',
+                            rotation=0,
+                            fontsize=8
+                        )
+                    bar_index += 1
+        
+        # Customize the plot
+        ax.set_xlabel('Dátum')
+        ax.set_ylabel('Reziduum (kWh)\nPozitív = Alulbecslés, Negatív = Túlbecslés')
+        ax.set_ylim(-max_diff * 1.1, max_diff * 1.1)  # Set x-axis limits symmetrically
+        ax.grid(True, linestyle='--', alpha=0.5)
+        ax.legend()
+        
+        # Set x-axis labels to dates
+        ax.set_xticks(x)
+        daily_real['date'] = pd.to_datetime(daily_real['date'])
+        ax.set_xticklabels(daily_real['date'].dt.strftime('%Y-%m-%d'))
+        
+        # Add zero line
+        ax.axhline(y=0, color='k', linestyle='-', alpha=0.2)
+        
+        plt.tight_layout()
+        plt.show()
 
 def plot_model_forecast(predictor, train_data, test_data, model, ax, color):
     """
@@ -258,11 +333,18 @@ def add_model_predictions(predictions, model_name, hourly_real, daily_real):
     forecast_df['date'] = pd.to_datetime(forecast_df['timestamp']).dt.date
     daily_forecast = forecast_df.groupby('date')['mean'].sum().reset_index()
     daily_forecast.rename(columns={'mean': f'{model_name} daily'}, inplace=True)
-    
+
+    daily_residual = daily_forecast[['date']].copy()
+    daily_residual[f'{model_name} daily residual'] = daily_real['daily_real_consumption'] - daily_forecast[f'{model_name} daily']
+
     hourly_forecast.rename(columns={'mean': f'{model_name} mean'}, inplace=True)
     
     hourly_real = pd.merge(hourly_real, hourly_forecast, on=['timestamp', 'item_id'])
     daily_real = pd.merge(daily_real, daily_forecast, on='date')
+    daily_real = pd.merge(daily_real, daily_residual, on='date')
+    daily_mae = daily_residual[f'{model_name} daily residual'].abs().mean()
+
+    print(f"  {model_name} daily MAE: {daily_mae:.2f} kWh")
     
     return hourly_real, daily_real
 
@@ -318,19 +400,19 @@ def main():
         'nlp': ['ChronosZeroShot[bolt_small]', 'ChronosFineTuned[bolt_small]']
     }
     
+    print("--- Starting: Calculating Daily Forecasts ---")
+    hourly_real, daily_real = daily_forecast(
+        predictor, train_data, test_data, model_groups, prediction_length
+    )
+    print("\nDaily consumption summary:")
+    print(daily_real.round(2).to_string(index=False))
+    #print("\nHourly consumption summary:")
+    #print(hourly_real.round(2).to_string(index=False))
+
     if args.plot:
         print("--- Starting: Generating Forecasts for Each Model ---")
-        generate_plots(predictor, train_data, test_data, model_groups)
-    
-    if args.daily:
-        print("--- Starting: Calculating Daily Forecasts ---")
-        hourly_real, daily_real = daily_forecast(
-            predictor, train_data, test_data, model_groups, prediction_length
-        )
-        print("\nDaily consumption summary:")
-        print(daily_real.round(2).to_string(index=False))
-        print("\nHourly consumption summary:")
-        print(hourly_real.round(2).to_string(index=False))
+        generate_hourly_plots(predictor, train_data, test_data, model_groups)
+        generate_daily_plots(daily_real, model_groups)
     
     print("--- Forecasting Research Script Finished ---")
 
